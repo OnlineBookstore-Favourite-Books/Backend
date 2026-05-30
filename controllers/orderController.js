@@ -85,6 +85,28 @@ const createOrder = (req, res) => {
   });
 };
 
+const getUserOrders = (req, res) => {
+  const { user_id } = req.params;
+
+  const sql = `
+    SELECT *
+    FROM orders
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+  `;
+
+  db.query(sql, [user_id], (err, results) => {
+    if (err) {
+      return res.status(500).json({
+        message: "Failed to fetch orders",
+      });
+    }
+
+    res.json(results);
+  });
+};
+
 module.exports = {
   createOrder,
+  getUserOrders,
 };
