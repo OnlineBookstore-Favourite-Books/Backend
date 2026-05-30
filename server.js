@@ -9,12 +9,14 @@ require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const bookRoutes = require("./routes/bookRoutes");
 const cartRoutes = require("./routes/cartRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/users", userRoutes);
 app.use("/api/books", bookRoutes);
