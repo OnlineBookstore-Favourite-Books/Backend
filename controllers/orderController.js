@@ -106,7 +106,68 @@ const getUserOrders = (req, res) => {
   });
 };
 
+const getAllOrders = (req, res) => {
+  const sql = `
+    SELECT
+      orders.id,
+      orders.total_amount,
+      orders.delivery_address,
+      orders.status,
+      orders.created_at,
+      users.name AS customer_name,
+      users.email AS customer_email
+    FROM orders
+    JOIN users ON orders.user_id = users.id
+    ORDER BY orders.created_at DESC
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      return res.status(500).json({
+        message: "Failed to fetch all orders",
+      });
+    }
+
+    res.json(results);
+  });
+};
+
+const updateOrderStatus = (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body || {};
+
+  const validStatuses = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"];
+
+  if (!status || !validStatuses.includes(status)) {
+    return res.status(400).json({
+      message: "Invalid order status",
+    });
+  }
+
+  const sql = "UPDATE orders SET status = ? WHERE id = ?";
+
+  db.query(sql, [status, id], (err, result) => {
+    if (err) {
+      return res.status(500).json({
+        message: "Failed to update order status",
+      });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    res.json({
+      message: "Order status updated successfully",
+    });
+  });
+};
+
 module.exports = {
   createOrder,
   getUserOrders,
+  getAllOrders,
+  updateOrderStatus,
 };
