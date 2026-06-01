@@ -35,11 +35,28 @@ const addBook = (req, res) => {
 
 // Get all books
 const getBooks = (req, res) => {
-  const sql = "SELECT * FROM books";
+  const { search, genre } = req.query;
 
-  db.query(sql, (err, results) => {
+  let sql = "SELECT * FROM books WHERE 1=1";
+  const params = [];
+
+  if (search) {
+    sql += " AND (title LIKE ? OR author LIKE ?)";
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  if (genre) {
+    sql += " AND genre = ?";
+    params.push(genre);
+  }
+
+  sql += " ORDER BY title";
+
+  db.query(sql, params, (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Failed to fetch books" });
+      return res.status(500).json({
+        message: "Failed to fetch books",
+      });
     }
 
     res.json(results);
