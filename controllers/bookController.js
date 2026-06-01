@@ -1,5 +1,20 @@
 const db = require("../config/db");
 
+const uploadBookCover = (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      message: "Cover image is required",
+    });
+  }
+
+  const imageUrl = `${req.protocol}://${req.get("host")}/uploads/book-covers/${req.file.filename}`;
+
+  return res.status(201).json({
+    message: "Cover image uploaded successfully",
+    image_url: imageUrl,
+  });
+};
+
 // Add new book
 const addBook = (req, res) => {
   const {
@@ -165,6 +180,7 @@ const deleteBook = (req, res) => {
 };
 
 module.exports = {
+  uploadBookCover,
   addBook,
   getBooks,
   getBookById,
