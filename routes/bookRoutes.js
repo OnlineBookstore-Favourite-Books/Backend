@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { uploadBookCover: uploadMiddleware } = require("../middleware/upload");
+const { authenticate, authorize } = require("../middleware/auth");
 
 const {
   uploadBookCover,
@@ -11,11 +12,14 @@ const {
   deleteBook,
 } = require("../controllers/bookController");
 
-router.post("/upload-cover", uploadMiddleware.single("cover"), uploadBookCover);
-router.post("/", addBook);
+// Public — customers browse without an account
 router.get("/", getBooks);
 router.get("/:id", getBookById);
-router.put("/:id", updateBook);
-router.delete("/:id", deleteBook);
+
+// Manager only — catalogue management
+router.post("/upload-cover", authenticate, authorize("manager"), uploadMiddleware.single("cover"), uploadBookCover);
+router.post("/", authenticate, authorize("manager"), addBook);
+router.put("/:id", authenticate, authorize("manager"), updateBook);
+router.delete("/:id", authenticate, authorize("manager"), deleteBook);
 
 module.exports = router;

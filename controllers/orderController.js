@@ -88,6 +88,10 @@ const createOrder = (req, res) => {
 const getUserOrders = (req, res) => {
   const { user_id } = req.params;
 
+  if (Number(user_id) !== req.user.id) {
+    return res.status(403).json({ message: "Forbidden. You cannot view another user's orders." });
+  }
+
   const sql = `
     SELECT *
     FROM orders
