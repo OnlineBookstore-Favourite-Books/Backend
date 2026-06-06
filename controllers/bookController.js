@@ -158,6 +158,50 @@ const updateBook = (req, res) => {
   );
 };
 
+// Update book stock only
+const updateBookStock = (req, res) => {
+  const { id } = req.params;
+  const { stock_quantity } = req.body;
+
+  if (stock_quantity === undefined || stock_quantity === null) {
+    return res.status(400).json({
+      message: "Stock quantity is required.",
+    });
+  }
+
+  const quantity = Number(stock_quantity);
+  if (Number.isNaN(quantity) || quantity < 0) {
+    return res.status(400).json({
+      message: "Stock quantity must be a number greater than or equal to 0.",
+    });
+  }
+
+  const sql = `
+    UPDATE books
+    SET stock_quantity = ?
+    WHERE id = ?
+  `;
+
+  db.query(sql, [quantity, id], (err, result) => {
+    if (err) {
+      return res.status(500).json({
+        message: "Failed to update stock quantity",
+      });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Book not found",
+      });
+    }
+
+    res.json({
+      message: "Stock quantity updated successfully",
+      stock_quantity: quantity,
+    });
+  });
+};
+
 // Delete book
 const deleteBook = (req, res) => {
   const { id } = req.params;
@@ -185,5 +229,6 @@ module.exports = {
   getBooks,
   getBookById,
   updateBook,
+  updateBookStock,
   deleteBook,
 };
