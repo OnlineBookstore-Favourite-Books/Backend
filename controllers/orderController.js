@@ -114,6 +114,7 @@ const getAllOrders = (req, res) => {
   const sql = `
     SELECT
       orders.id,
+      orders.user_id,
       orders.total_amount,
       orders.delivery_address,
       orders.status,
@@ -174,9 +175,49 @@ const updateOrderStatus = (req, res) => {
   });
 };
 
+const getOrderById = (req, res) => {
+  const { id } = req.params;
+
+  const orderSql = `
+    SELECT
+      orders.id,
+      orders.user_id,
+      orders.total_amount,
+      orders.delivery_address,
+      orders.status,
+      orders.courier_id,
+      orders.created_at,
+      users.name AS customer_name,
+      users.email AS customer_email
+    FROM orders
+    JOIN users ON orders.user_id = users.id
+    WHERE orders.id = ?
+  `;
+
+  db.query(orderSql, [id], (err, orderResults) => {
+    if (err) return res.status(500).json({ message: "Failed to fetch order" });
+    if (orderResults.length === 0) return res.status(404).json({ message: "Order not found" });
+
+    const order = orderResults[0];
+
+    const itemsSql = `
+      SELECT book_id, title, author, price, quantity
+      FROM order_items
+      WHERE order_id = ?
+    `;
+
+    db.query(itemsSql, [id], (err, items) => {
+      if (err) return res.status(500).json({ message: "Failed to fetch order items" });
+
+      res.json({ ...order, items });
+    });
+  });
+};
+
 module.exports = {
   createOrder,
   getUserOrders,
   getAllOrders,
+  getOrderById,
   updateOrderStatus,
 };
