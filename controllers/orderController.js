@@ -117,6 +117,7 @@ const getAllOrders = (req, res) => {
       orders.total_amount,
       orders.delivery_address,
       orders.status,
+      orders.courier_id,
       orders.created_at,
       users.name AS customer_name,
       users.email AS customer_email
@@ -138,7 +139,7 @@ const getAllOrders = (req, res) => {
 
 const updateOrderStatus = (req, res) => {
   const { id } = req.params;
-  const { status } = req.body || {};
+  const { status, courier_id } = req.body || {};
 
   const validStatuses = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"];
 
@@ -148,9 +149,13 @@ const updateOrderStatus = (req, res) => {
     });
   }
 
-  const sql = "UPDATE orders SET status = ? WHERE id = ?";
+  const sql = courier_id
+    ? "UPDATE orders SET status = ?, courier_id = ? WHERE id = ?"
+    : "UPDATE orders SET status = ? WHERE id = ?";
 
-  db.query(sql, [status, id], (err, result) => {
+  const params = courier_id ? [status, courier_id, id] : [status, id];
+
+  db.query(sql, params, (err, result) => {
     if (err) {
       return res.status(500).json({
         message: "Failed to update order status",

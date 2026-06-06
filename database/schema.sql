@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS orders (
   total_amount DECIMAL(10, 2) NOT NULL,
   delivery_address VARCHAR(255) NOT NULL,
   status ENUM('pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled') NOT NULL DEFAULT 'pending',
+  courier_id VARCHAR(50) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_orders_user
