@@ -56,8 +56,8 @@ const getBooks = (req, res) => {
   const params = [];
 
   if (search) {
-    sql += " AND (title LIKE ? OR author LIKE ?)";
-    params.push(`%${search}%`, `%${search}%`);
+    sql += " AND (title LIKE ? OR author LIKE ? OR isbn LIKE ?)";
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
   }
 
   if (genre) {

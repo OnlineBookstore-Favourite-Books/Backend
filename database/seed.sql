@@ -69,3 +69,37 @@ ON DUPLICATE KEY UPDATE
   image_url = VALUES(image_url),
   genre = VALUES(genre),
   stock_quantity = VALUES(stock_quantity);
+
+-- Sample orders
+INSERT INTO orders (id, user_id, total_amount, delivery_address, status, courier_id, created_at)
+VALUES
+  (1, 3, 79.80, '12 Reader Lane, Melbourne VIC 3000', 'delivered', 'AUSPOST-881234', DATE_SUB(NOW(), INTERVAL 14 DAY)),
+  (2, 3, 24.50, '12 Reader Lane, Melbourne VIC 3000', 'shipped',   'STARTRACK-445566', DATE_SUB(NOW(), INTERVAL 5 DAY)),
+  (3, 3, 51.90, '12 Reader Lane, Melbourne VIC 3000', 'processing', NULL, DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  (4, 3, 22.00, '12 Reader Lane, Melbourne VIC 3000', 'pending',    NULL, DATE_SUB(NOW(), INTERVAL 1 DAY)),
+  (5, 3, 29.90, '12 Reader Lane, Melbourne VIC 3000', 'cancelled',  NULL, DATE_SUB(NOW(), INTERVAL 7 DAY)),
+  (6, 3, 74.40, 'In-Store Purchase',                  'delivered',  NULL, DATE_SUB(NOW(), INTERVAL 10 DAY))
+ON DUPLICATE KEY UPDATE
+  status     = VALUES(status),
+  courier_id = VALUES(courier_id);
+
+-- Order items for the sample orders
+INSERT INTO order_items (order_id, book_id, title, author, price, quantity)
+VALUES
+  -- Order 1: Clean Code x1 + Atomic Habits x1
+  (1, 1, 'Clean Code',            'Robert C. Martin', 49.90, 1),
+  (1, 2, 'Atomic Habits',         'James Clear',      29.90, 1),
+  -- Order 2: A Brief History of Time x1
+  (2, 3, 'A Brief History of Time', 'Stephen Hawking', 24.50, 1),
+  -- Order 3: Clean Code x1 + The Midnight Library x1
+  (3, 1, 'Clean Code',            'Robert C. Martin', 49.90, 1),
+  (3, 4, 'The Midnight Library',  'Matt Haig',        22.00, 1),
+  -- Order 4: The Midnight Library x1
+  (4, 4, 'The Midnight Library',  'Matt Haig',        22.00, 1),
+  -- Order 5: Cancelled — Atomic Habits x1
+  (5, 2, 'Atomic Habits',         'James Clear',      29.90, 1),
+  -- Order 6: In-store — Atomic Habits x1 + The Midnight Library x2
+  (6, 2, 'Atomic Habits',         'James Clear',      29.90, 1),
+  (6, 4, 'The Midnight Library',  'Matt Haig',        22.00, 2)
+ON DUPLICATE KEY UPDATE
+  quantity = VALUES(quantity);

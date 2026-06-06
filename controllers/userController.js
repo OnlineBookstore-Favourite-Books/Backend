@@ -91,7 +91,50 @@ const loginUser = (req, res) => {
   });
 };
 
+const updateProfile = (req, res) => {
+  const { id } = req.params;
+
+  if (Number(id) !== req.user.id) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  const { name, phone, address } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ message: "Name is required" });
+  }
+
+  db.query(
+    "UPDATE users SET name = ?, phone = ?, address = ? WHERE id = ?",
+    [name.trim(), phone || null, address || null, id],
+    (err) => {
+      if (err) return res.status(500).json({ message: "Failed to update profile" });
+      res.json({ message: "Profile updated successfully", name: name.trim(), phone, address });
+    }
+  );
+};
+
+const getProfile = (req, res) => {
+  const { id } = req.params;
+
+  if (Number(id) !== req.user.id) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  db.query(
+    "SELECT id, name, email, phone, address, role FROM users WHERE id = ?",
+    [id],
+    (err, results) => {
+      if (err) return res.status(500).json({ message: "Failed to fetch profile" });
+      if (results.length === 0) return res.status(404).json({ message: "User not found" });
+      res.json(results[0]);
+    }
+  );
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  getProfile,
+  updateProfile,
 };
