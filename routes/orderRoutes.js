@@ -16,7 +16,7 @@ const {
 // Any logged in user — place an order or view own history
 router.post("/", authenticate, createOrder);
 router.post("/instore", authenticate, authorize("staff", "manager"), createInStoreOrder);
-router.post("/:id/confirm-payment", authenticate, authorize("staff", "manager"), confirmPayment);
+router.post("/:id/confirm-payment", authenticate, confirmPayment);
 router.delete("/:id/cancel", authenticate, cancelPendingOrder);
 router.get("/user/:user_id", authenticate, getUserOrders);
 

@@ -110,6 +110,10 @@ const confirmPayment = (req, res) => {
     if (rows.length === 0) return res.status(404).json({ message: "Order not found" });
     if (rows[0].status !== "pending") return res.status(400).json({ message: "Order is not pending" });
 
+    if (rows[0].user_id !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden. You cannot confirm payment for another user's order." });
+    }
+
     const userId = rows[0].user_id;
     const items = rows.map(r => ({ book_id: r.book_id, quantity: r.quantity }));
 
