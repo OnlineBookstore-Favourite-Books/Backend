@@ -56,8 +56,15 @@ const getBooks = (req, res) => {
   const params = [];
 
   if (search) {
-    sql += " AND (title LIKE ? OR author LIKE ? OR isbn LIKE ?)";
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    const terms = String(search)
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    terms.forEach((term) => {
+      sql += " AND (title LIKE ? OR author LIKE ? OR isbn LIKE ? OR genre LIKE ?)";
+      params.push(`%${term}%`, `%${term}%`, `%${term}%`, `%${term}%`);
+    });
   }
 
   if (genre) {
