@@ -75,10 +75,19 @@ const createOrder = (req, res) => {
           return res.status(500).json({ message: "Failed to create order items" });
         }
 
-        res.status(201).json({
-          message: "Order created",
-          order_id: orderId,
-          total_amount: totalAmount,
+        // Once an online order is placed, clear the cart. Payment confirmation is handled by staff/manager.
+        db.query("DELETE FROM cart_items WHERE user_id = ?", [user_id], (clearErr) => {
+          if (clearErr) {
+            return res.status(500).json({ message: "Order created but failed to clear cart" });
+          }
+
+          res.status(201).json({
+            message: "Order placed and awaiting payment confirmation",
+            order_id: orderId,
+            total_amount: totalAmount,
+            delivery_address,
+            payment_status: "pending",
+          });
         });
       });
     });
@@ -137,33 +146,29 @@ const confirmPayment = (req, res) => {
         );
 
         Promise.all(stockUpdates).then(() => {
-          db.query("DELETE FROM cart_items WHERE user_id = ?", [userId], (err) => {
-            if (err) return res.status(500).json({ message: "Payment confirmed but cart not cleared" });
-
-            const receiptSql = `
-              SELECT orders.id, orders.total_amount, orders.delivery_address,
-                     users.name AS customer_name, users.email AS customer_email
-              FROM orders
-              JOIN users ON orders.user_id = users.id
-              WHERE orders.id = ?
-            `;
-            db.query(receiptSql, [id], (err, receiptRows) => {
-              if (err || receiptRows.length === 0) {
-                return res.json({ message: "Payment confirmed successfully" });
-              }
-              const r = receiptRows[0];
-              res.json({
-                message: "Payment confirmed successfully",
-                order_id: id,
-                total_amount: r.total_amount,
-                delivery_address: r.delivery_address,
-                customer_name: r.customer_name,
-                customer_email: r.customer_email,
-                notifications: {
-                  receipt: `[PLACEHOLDER] Receipt email would be sent to: ${r.customer_email}`,
-                  store: `[PLACEHOLDER] Order notification would be sent to: store@favouritebooks.com`,
-                },
-              });
+          const receiptSql = `
+            SELECT orders.id, orders.total_amount, orders.delivery_address,
+                   users.name AS customer_name, users.email AS customer_email
+            FROM orders
+            JOIN users ON orders.user_id = users.id
+            WHERE orders.id = ?
+          `;
+          db.query(receiptSql, [id], (err, receiptRows) => {
+            if (err || receiptRows.length === 0) {
+              return res.json({ message: "Payment confirmed successfully" });
+            }
+            const r = receiptRows[0];
+            res.json({
+              message: "Payment confirmed successfully",
+              order_id: id,
+              total_amount: r.total_amount,
+              delivery_address: r.delivery_address,
+              customer_name: r.customer_name,
+              customer_email: r.customer_email,
+              notifications: {
+                receipt: `[PLACEHOLDER] Receipt email would be sent to: ${r.customer_email}`,
+                store: `[PLACEHOLDER] Order notification would be sent to: store@favouritebooks.com`,
+              },
             });
           });
         }).catch(() => {
@@ -268,6 +273,18 @@ const getAllOrders = (req, res) => {
       orders.delivery_address,
       orders.status,
       orders.courier_id,
+      CASE
+        WHEN orders.delivery_address = 'In-Store Purchase' THEN 'In-Store POS'
+        ELSE 'Online Card'
+      END AS payment_method,
+      CASE
+        WHEN orders.delivery_address = 'In-Store Purchase' THEN CONCAT('POS-', orders.id)
+        ELSE CONCAT('WEB-', orders.id)
+      END AS payment_reference,
+      CASE
+        WHEN orders.status = 'pending' THEN 'Awaiting Confirmation'
+        ELSE 'Confirmed'
+      END AS payment_status,
       orders.created_at,
       users.name AS customer_name,
       users.email AS customer_email
@@ -335,6 +352,18 @@ const getOrderById = (req, res) => {
       orders.delivery_address,
       orders.status,
       orders.courier_id,
+      CASE
+        WHEN orders.delivery_address = 'In-Store Purchase' THEN 'In-Store POS'
+        ELSE 'Online Card'
+      END AS payment_method,
+      CASE
+        WHEN orders.delivery_address = 'In-Store Purchase' THEN CONCAT('POS-', orders.id)
+        ELSE CONCAT('WEB-', orders.id)
+      END AS payment_reference,
+      CASE
+        WHEN orders.status = 'pending' THEN 'Awaiting Confirmation'
+        ELSE 'Confirmed'
+      END AS payment_status,
       orders.created_at,
       users.name AS customer_name,
       users.email AS customer_email
